@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+    <script type="text/javascript" src="https://unpkg.com/vue"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+
+
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+</head>
+<body>
+<div id="app">
+    <!--账号：<input type="text" v-model="account"><br>-->
+    <!--密码：<input type="password" v-model="pwd"><br>-->
+    <!--<button @click="login">登录</button>-->
+    <el-row>
+        <el-input placeholder="请输入账户" style="width: 260px" v-model="account"></el-input><br>
+        <el-input placeholder="请输入密码" style="width: 260px" v-model="pwd"></el-input><br>
+    </el-row>
+    <el-row>
+        <el-button type="primary" @click="login">立即登录</el-button>
+    </el-row>
+</div>
+<script>
+    var vm =new Vue({
+        el:"#app",
+        data:{
+            account:'',
+            pwd:''
+        },
+        methods:{
+            login:function () {
+                //调用axios发送到后台
+                axios.post("/admin/loginByShiro",{
+                    adminAccount:this.account,
+                    adminPwd:this.pwd
+                }).then(res=>{
+                    if(res.data.code==20000) {
+                    console.log(res)
+                    var account = sessionStorage.setItem("account",this.account)
+                    console.log(account)
+                    window.location.href = "/page/studentlist";
+                }else{
+                        //alert("密码错误，青重新输出")
+                    this.$alert('账号或密码错误', '登录失败', {
+                        confirmButtonText: '确定',
+                        callback: action => {
+                        this.$message({
+                            type: '请重新输入',
+                            message: `action: ${ action }`
+                        });
+                }
+                });
+                }
+            });
+            }
+        }
+    })
+</script>
+</body>
+</html>

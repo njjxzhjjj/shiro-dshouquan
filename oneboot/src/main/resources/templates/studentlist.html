@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
+      xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+
+<head>
+    <meta charset="UTF-8">
+    <title>学生的列表项</title>
+    <!--<link rel="stylesheet" href="/element-ui-2.13.2.css">-->
+    <script src="/vue.js"></script>
+    <!--<script src="/element-ui-2.13.2.js"></script>-->
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="/axios.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <template>
+        <!--弹框  修改   visible可见-->
+        <el-dialog title="修改" :visible.sync="dialogFormVisible">
+            <el-form :model="student">
+                <el-form-item label="学生姓名" :label-width="formLabelWidth">
+                    <el-input v-model="student.studentName"></el-input>
+                </el-form-item>
+
+                <el-form-item label="学生性别" :label-width="formLabelWidth">
+                    <!--<el-input v-model="student.studentSex" ></el-input>-->
+                    <el-radio-group v-model="student.studentSex">
+                        <el-radio-button label="男"></el-radio-button>
+                        <el-radio-button label="女"></el-radio-button>
+                    </el-radio-group>
+                </el-form-item>
+
+                <el-form-item label="学生手机号" :label-width="formLabelWidth">
+                    <el-input v-model="student.studentPhone" ></el-input>
+                </el-form-item>
+
+                <el-form-item label="学生身份证号" :label-width="formLabelWidth">
+                    <el-input v-model="student.studentCardId" ></el-input>
+                </el-form-item>
+
+                <el-form-item label="学生地址" :label-width="formLabelWidth">
+                    <el-input v-model="student.studentAddress" ></el-input>
+                </el-form-item>
+
+                <el-form-item label="学生入学时间" :label-width="formLabelWidth">
+                    <el-input v-model="student.studentComeDate" ></el-input>
+                </el-form-item>
+
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="dialogFormVisible = false">取 消</el-button>
+                <el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
+            </div>
+        </el-dialog>
+
+        <!--弹框  添加   visible可见-->
+        <el-dialog title="添加" :visible.sync="addFormVisible">
+            <el-form :model="student">
+                <el-form-item label="学生姓名" :label-width="formLabelWidth">
+                    <el-input v-model="student.studentName"></el-input>
+                </el-form-item>
+
+                <el-form-item label="学生性别" :label-width="formLabelWidth">
+                    <!--<el-input v-model="student.studentSex" ></el-input>-->
+                    <el-radio-group v-model="student.studentSex">
+                        <el-radio-button label="男"></el-radio-button>
+                        <el-radio-button label="女"></el-radio-button>
+                    </el-radio-group>
+                </el-form-item>
+
+                <el-form-item label="学生手机号" :label-width="formLabelWidth">
+                    <el-input v-model="student.studentPhone" ></el-input>
+                </el-form-item>
+
+                <el-form-item label="学生身份证号" :label-width="formLabelWidth">
+                    <el-input v-model="student.studentCardId" ></el-input>
+                </el-form-item>
+
+                <el-form-item label="学生地址" :label-width="formLabelWidth">
+                    <el-input v-model="student.studentAddress" ></el-input>
+                </el-form-item>
+
+                <el-form-item label="学生入学时间" :label-width="formLabelWidth">
+                    <el-input v-model="student.studentComeDate" ></el-input>
+                </el-form-item>
+
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="addFormVisible = false">取 消</el-button>
+                <el-button type="primary" @click="addFormVisible = false">确 定</el-button>
+            </div>
+        </el-dialog>
+
+
+        <span id="aa">
+        </span>
+        <span>登录了</span>
+        <!--搜素框-->
+        <div>
+            <el-select v-model="student.studentSex" placeholder="请选择">
+                <el-option
+                        v-for="item in options"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value">
+                </el-option>
+            </el-select>
+
+            <el-input v-model="student.studentName" placeholder="请输入名字" style="width: 20%"></el-input>
+
+            <!--<el-button type="success" @click="searchBtn">搜索</el-button>-->
+            <el-button type="primary" round @click="searchBtn">搜索</el-button>
+        </div>
+<div>
+    <!--shiro:hasRole  授权-->
+    <shiro:hasRole name="人事经理"><el-button type="primary" round @click="addBtn">增加</el-button></shiro:hasRole>
+</div>
+
+        <div>
+        <el-table
+                :data="tableData"
+                style="width: 100%">
+            <el-table-column
+                    prop="studentId"
+                    label="学号"
+                    width="180">
+            </el-table-column>
+            <el-table-column
+                    prop="studentName"
+                    label="学生姓名"
+                    width="180">
+            </el-table-column>
+            <el-table-column
+                    prop="studentPhone"
+                    label="学生手机号">
+            </el-table-column>
+            <el-table-column
+                    prop="studentSex" :formatter="formatRole"
+                    label="学生性别">
+                <!--formatter 格式化内容-->
+            </el-table-column>
+            <el-table-column
+                    prop="studentCardId"
+                    label="身份证号">
+            </el-table-column>
+            <el-table-column
+                    prop="studentAddress"
+                    label="学生地址">
+            </el-table-column>
+            <el-table-column
+                    prop="studentComeDate"
+                    label="学生入学时间">
+            </el-table-column>
+
+            <el-table-column label="操作">
+                <template slot-scope="scope">
+                   <shiro:hasRole name="人事经理"><el-button
+                            size="mini"
+                            @click="handleEdit(scope.$index, scope.row)">编辑</el-button></shiro:hasRole>
+                    <shiro:hasRole name="人事经理"><el-button
+                            size="mini"
+                            type="danger"
+                            @click="handleDelete(scope.$index, scope.row)">删除</el-button></shiro:hasRole>
+                </template>
+            </el-table-column>
+        </el-table>
+        </div>
+
+        <div class="block">
+            <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="10"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="total">
+            </el-pagination>
+        </div>
+    </template>
+
+</div>
+
+<script>
+
+    var vm = new Vue({
+        el:"#app",
+        data:{
+            tableData: [],
+            currentPage: 1,
+            page:1,
+            limit:10,
+            total:0,
+
+            options: [{
+                value: '1',
+                label: '男生'
+            }, {
+                value: '0',
+                label: '女生'
+            }],
+            student:{
+                studentName:'',
+                studentSex:'',
+                studentComeDate:''
+            },
+
+            //弹框  可见
+            dialogFormVisible: false,
+            addFormVisible: false,
+            formLabelWidth:'100px'
+        },
+        methods:{
+            //搜索
+            searchBtn:function(){
+                console.log("发送axios......")
+                this.loadTable(this.page,this.limit);
+            },
+            //增加
+            addBtn:function(){
+                alert("执行增加的方法")
+                this. addFormVisible=true;
+           },
+            //编辑
+            handleEdit(index, row) {
+                console.log(index, row);
+                //第一个是索引，第二个是数据！！！
+                //点击后  应当弹出 弹出框 可见
+              this. dialogFormVisible=true;
+              //赋值给row
+              this.student=row;
+            },
+            //删除
+            handleDelete(index, row) {
+                console.log(index, row);
+            },
+
+            //男女
+            formatRole: function( row, column) {
+                return row.studentSex == '0' ? "女" : row.studentSex == '1' ? "男" : "aa";
+            },
+
+            //条数
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+                this.loadTable(this.page,val);
+            },
+            handleCurrentChange(val) {
+                console.log(`当前页: ${val}`);
+                this.loadTable(val,this.limit); //页面
+            },
+            loadTable:function(page,limit){
+                    axios.get("/student/selectPageAll", {
+                        params:{
+                            page:page,
+                            limit:limit,
+                            studentSex:this.student.studentSex,
+                            studentName:this.student.studentName
+                        }
+                }).then(res=>{
+                        console.log(res)
+                        //把json数组赋值给tableData
+                        this.tableData=res.data.data.list;
+                        this.total=res.data.data.total;
+                var username = sessionStorage.getItem("account")
+                document.querySelector("#aa").innerHTML=username
+                    });
+            }
+        },
+        created(){
+            this.loadTable(this.page,this.limit);
+        }
+
+        // created:function () {
+        //     //页面一加载就要访问url  /student/selectAll
+        //     axios.get("/student/selectPageAll", {
+        //         params:{
+        //             page:page,
+        //             limit:limit
+        //         }
+        // }).then(res=>{
+        //         console.log(res)
+        //         //把json数组赋值给tableData
+        //         this.tableData=res.data.data
+        //     });
+        // }
+    })
+</script>
+
+</body>
+</html>
